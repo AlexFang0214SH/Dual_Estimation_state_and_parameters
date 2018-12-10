@@ -79,51 +79,57 @@ class World:
 			for d in data["right"]:
 				self.add_landmark((d[0], d[1], color["right"], RFID))
 				RFID += 1
-			# for d in data["path"]:
-			# 	self.add_landmark((d[0], d[1], color["path"]))
+			for d in data["path"]:
+				RFID += 1
+				self.add_landmark((d[0], d[1], color["path"], RFID))
 			
 			return data
 
-	# def create_control(self, motion_model, dt):
-	# 	v = 5
-	# 	# remove first
-	# 	path = self.track["path"][1:, 0:]
+	def create_control(self, cycle, dt):
+		pwm = 5
+		# remove first
+		path = self.track["path"][1:, 0:]
 
-	# 	# Cyclic
-	# 	path = np.append(path, [path[0]], axis=0)
-	# 	# path = np.append(path, path[1:5], axis=0)
+		# Cyclic
+		path = np.append(path, [path[0]], axis=0)
+		# path = np.append(path, path[1:5], axis=0)
 
-	# 	control = []
-	# 	x, y = path[0][0], path[0][1]
+		control = []
+		x, y = path[0][0], path[0][1]
 
-	# 	self.start = [x, y, 0, 0, v]
+		self.start = np.matrix([[x, y, 0, 0, 0]]).T
 
-	# 	x = self.start
-	# 	for i in range(1, len(path)):
-	# 		# if i > 2:
-	# 		# 	break
-	# 		w = 0
-	# 		c = 0
-	# 		while sqrt((path[i][1] - x[1])**2 + (path[i][0] - x[0])**2) > 5 or fabs(w) < pi/2:
-	# 			# if i == 18 and c > 20:
-	# 			# 	break
-	# 			c+=1
-	# 			w = atan2(path[i][1] - x[1], path[i][0] - x[0]) - x[2]
+		agent.reset(self.start)
+		x = self.start
+		for i in range(1, len(path)):
+			# if i > 2:
+			# 	break
+			w = 0
+			c = 0
+			while sqrt((path[i][1] - x[1,0])**2 + (path[i][0] - x[0,0])**2) > 5 or fabs(w) < pi/2:
+				# if i == 18 and c > 20:
+				# 	break
+				c+=1
 
-	# 			if (w < -pi ):
-	# 				w = 2*pi + w
-	# 			# w = w % (2*pi)
+				# if (w < -pi ):
+				# 	w = 2*pi + w
+				# w = w % (2*pi)
 
-	# 			w = w*rand(0.0)
+				w = w*rand(0.0)
 
-	# 			w = min(pi/2, max(-pi/2, w))
-	# 			# if i==18:
-	# 			# 	print w, atan2(path[i][1] - y, path[i][0] - x), th, x, y, path[i]
+				w = min(pi/2, max(-pi/2, w))
+				# if i==18:
+				# 	print w, atan2(path[i][1] - y, path[i][0] - x), th, x, y, path[i]
 
-	# 			u = [w, v]
-	# 			x = motion_model(dt, x, u)
-	# 			control.append(u)
+				u = np.matrix([[v, w]]).T
+				x, y = agent.step(dt, x, u)
+				control.append(u)
+				
+				w = atan2(path[i][1] - x[1,0], path[i][0] - x[0,0]) - x[2,0]
 
-	# 	return control
+				w = (w + pi)%(2*pi) - pi
+
+		return control
+		
 		
 

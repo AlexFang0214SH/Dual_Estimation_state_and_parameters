@@ -3,27 +3,35 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import math
-from math import cos, sin, tan, pi, atan2, sqrt
+from math import cos, sin, tan, pi, atan2, sqrt, fabs
 
 from world import World
 
 
 from bicycle import Bicycle
 
+import EKF
+
+
 R_SIM = np.diag([0.01, 0.01, 0.01*pi/180, 0.001, 0, 0]);
-Q_SIM = np.diag([0.05, 0.05, 0.1, 0.3]);
+Q_SIM = np.diag([1., 1., 1.]);
 
 
 R_MODEL = np.diag([0.01, 0.01, 0.01*pi/180, 0.001, 0, 0]);
-Q_MODEL = np.diag([0.05, 0.05, 0.1, 0.3])
+Q_MODEL = np.diag([1., 1., 1.])
+# x,y,v
 
+EKF.R = R_MODEL
+EKF.Q = Q_MODEL
 
-
+# state = [x, y, theta, v, 1/L, k/m].Transpose
+# u = [pwm, steer].Transpose
 
 
 W = World(100, 100)
+W.load('track2.pkl')
 
-N = 1000;
+N = 10000;
 control = np.random.rand(2, N) - 0.5;
 
 
@@ -36,28 +44,42 @@ cycle_sim.observation_noise(Q_SIM)
 W.add_agent(cycle_sim)
 
 
-state = np.matrix([[10, 20, 0, 0, 1, 0.1]]).T
+state = np.matrix([[10, 20, 0, 0, 0.1, 1]]).T
 
 cycle_model = Bicycle(state = state, color="red", name="Model");
 cycle_model.process_noise(R_MODEL)
 cycle_model.observation_noise(Q_MODEL)
 W.add_agent(cycle_model)
 
+target = 1
+path = W.track["path"][0:, 0:]
+L = len(W.track["path"])
+vmax = 0.5
 
 
 for i in range(N):
 	# u = control[:, i:i+1]
-	u = np.matrix([[0.2],[ 0.1]])
+	# steer = atan2(path[target][1] - cycle_sim.state[1,0], path[target][0] - cycle_sim.state[0,0]) - cycle_sim.state[2,0]
+
+	# steer = (steer + pi)%(2*pi) - pi;
+	# if(fabs(steer) > pi/2) and sqrt((path[target][1] - cycle_sim.state[1,0])**2 + (path[target][0] - cycle_sim.state[0,0])**2) < 5:
+	# 	steer = 0.;
+	# 	target = (target + 1)%L;
+	# steer = min(pi/2, max(-pi/2, steer))
+	# u = np.matrix([[vmax - cycle_sim.state[3,0]],[ steer]])
+	u = np.matrix([[0.1],[ 0.1]])
 
 	# Move actual system
-	nX, nY = cycle_sim.move(u)
-	nX, nY = cycle_model.step(cycle_model.dt, cycle_model.state, u)
-	cycle_model.set(nX)
+	nX, nZ = cycle_sim.move(u)
+	print nX[0,0]
+
+	xEst, Qt = EKF.run(cycle_model, u, nZ);
+
+	# xEst, nY = cycle_model.step(cycle_model.dt, cycle_model.state, u)
+	cycle_model.set(xEst)
 
 	if(i%W.frequency == 0):
 		W.plot()
-		# for particle in P.px:
-		# 	plt.scatter((particle[0]), (particle[1]), s= 10, color='blue')
 
 
 
@@ -80,9 +102,10 @@ def summary(name, i, type = "X"):
 
 	ax.legend(loc='upper right')
 
-summary("velocity", 3)
-summary("Theta", 2)
-summary("Measured w", 2, type="Y")
-summary("Measured acce", 3, type="Y")
+summary("X", 0)
+summary("L_iv", 4)
+summary("K/m", 5)
+# summary("Measured w", 2, type="Y")
+# summary("Measured acce", 3, type="Y")
 
 plt.show()
