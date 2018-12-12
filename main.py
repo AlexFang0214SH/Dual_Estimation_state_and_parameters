@@ -13,16 +13,16 @@ from bicycle import Bicycle
 import EKF
 
 
-R_SIM = np.diag([0.01, 0.01, 0.01*pi/180, 0.001, 0, 0]);
-Q_SIM = np.diag([1., 1., 1.]);
+R_SIM = np.diag([0.01, 0.01, 0.1*pi/180, 0.01, 0, 0]);
+Q_SIM = np.diag([0.05, 0.05, 0.1*pi/180, 0.01, 0.01]);
 
 
-R_MODEL = np.diag([0.01, 0.01, 0.01*pi/180, 0.001, 0, 0]);
-Q_MODEL = np.diag([1., 1., 1.])
-# x,y,v
+R_MODEL = np.diag([0.01, 0.01, 0.2*pi/180, 0.01, 0.0, 0.0]);
+Q_MODEL = np.diag([0.05, 0.05, 0.2*pi/180, 0.015, 0.015])
+# x,y,theta,w,a
 
 EKF.R = R_MODEL
-EKF.Q = Q_MODEL
+EKF.Q = Q_SIM
 
 # state = [x, y, theta, v, 1/L, k/m].Transpose
 # u = [pwm, steer].Transpose
@@ -31,7 +31,7 @@ EKF.Q = Q_MODEL
 W = World(100, 100)
 W.load('track2.pkl')
 
-N = 10000;
+N = 6000;
 control = np.random.rand(2, N) - 0.5;
 
 
@@ -44,7 +44,7 @@ cycle_sim.observation_noise(Q_SIM)
 W.add_agent(cycle_sim)
 
 
-state = np.matrix([[10, 20, 0, 0, 0.1, 1]]).T
+state = np.matrix([[10, 20, 0, 0, 0.1, .1]]).T
 
 cycle_model = Bicycle(state = state, color="red", name="Model");
 cycle_model.process_noise(R_MODEL)
@@ -67,11 +67,10 @@ for i in range(N):
 	# 	target = (target + 1)%L;
 	# steer = min(pi/2, max(-pi/2, steer))
 	# u = np.matrix([[vmax - cycle_sim.state[3,0]],[ steer]])
-	u = np.matrix([[0.1],[ 0.1]])
+	u = np.matrix([[2. + 0.*np.random.randn() - cycle_sim.state[3,0]],[ 0.5*sin(0.005*i) + 0.*np.random.randn()]])
 
 	# Move actual system
 	nX, nZ = cycle_sim.move(u)
-	print nX[0,0]
 
 	xEst, Qt = EKF.run(cycle_model, u, nZ);
 
@@ -102,7 +101,7 @@ def summary(name, i, type = "X"):
 
 	ax.legend(loc='upper right')
 
-summary("X", 0)
+summary("V", 3)
 summary("L_iv", 4)
 summary("K/m", 5)
 # summary("Measured w", 2, type="Y")
