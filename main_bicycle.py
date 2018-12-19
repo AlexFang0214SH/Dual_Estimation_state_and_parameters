@@ -19,7 +19,7 @@ Q_SIM = np.diag([0.05, 0.05, 0.01, 0.01]);
 
 R_MODEL = np.diag([0.01, 0.01, 0.2*pi/180, 0.01, 0.0, 0.0]);
 Q_MODEL = np.diag([0.05, 0.05, 0.015, 0.015])
-# x,y,theta,w,a
+# Z => [x,y,w,a].transpose
 
 EKF.R = R_MODEL
 EKF.Q = Q_SIM

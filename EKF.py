@@ -37,14 +37,14 @@ def compute_jacobian(dt, state, u):
 
 	H = np.matrix([ [1, 0, 0, 0, 0, 0],
 					[0, 1, 0, 0, 0, 0],
-					[0, 0, 1, 0, 0, 0],
+					# [0, 0, 1, 0, 0, 0],
 					[0, 0, 0, 0, v*tan(steer), 0],
 					[0, 0, 0, 0, 0, pwm]])
 
 	Jp = np.matrix([[v*tan(steer)*dt, 0],
 					[0, pwm*dt]])
 
-	return G, H, Jp
+	return G, H
 
 
 
@@ -57,7 +57,7 @@ def run(cycle, u, z):
 	dz = z - zp
 
 
-	G, H, Jp = compute_jacobian(cycle.dt, cycle.state, u)
+	G, H = compute_jacobian(cycle.dt, cycle.state, u)
 
 	Qtp = np.matmul(G, np.matmul(Qt, G.T)) + R;
 
