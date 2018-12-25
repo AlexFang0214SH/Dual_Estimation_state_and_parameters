@@ -3,15 +3,15 @@ clear all
 close all
 
 dt= 0.1;
-u = [0.5,0.01];
+u = [0.1,0.01];
 %state = [x, y, theta, v]
 %parameter = [1/L, k/m]
 %Simulation model
 x = [10;20; 0; 0; 0.015; 50];
 
 % The system model for both UKF's
-xsbar = [0; 0; 0; 0]; % initial belief
-xpbar = [2.5; 40.5]; % initial belief
+xsbar = [5; 10; 0; 0]; % initial belief
+xpbar = [2.015; 40.5]; % initial belief
 
 Ps = diag([1, 1, 0.2, 5]); %initial belief uncertainity
 Pp = diag([20, 20]);
@@ -28,14 +28,14 @@ Xpbar(:,1) = xpbar;
 
 for loop = 1:n
     x = step_sim(x,u,dt);
-    z = x(1:4,1)+0.1*randn(4,1); %observing all state in simulation , added some noise boi)
+    z = x(1:4,1) + 0.01*randn(4,1); %observing all state in simulation , added some noise boi)
     
     %% Prediction
     %%Parameter
     %UKF defining tuning variables and weights
     L_p=numel(xpbar);
     alpha_p=1e-3; %tune here.. for parameters
-    ki_p=0;
+    ki_p=1;
     beta_p=2;
     lambda_p=alpha_p^2*(L_p+ki_p)-L_p;
     c_p=L_p+lambda_p;
@@ -71,7 +71,7 @@ for loop = 1:n
     
     %UKF defining sigma points Xt-1
     Xs=sigmas(xsbar,Ps,c_s);                            %sigma points around x
-    
+    xsbar_prev = xsbar;
     %parameter prediction using unscented transform
     xshat = zeros(L_s,1);
     for k=1:size(Xs,2)%check if it is 2N or not
@@ -103,14 +103,15 @@ for loop = 1:n
     %%UKF on measurement for parameters 
     zphat = zeros(L_s,1);
     for k=1:size(Xp,2)%check if it is 2N or not
-        Yzp(:,k) = predict_state(xsbar,Xp(:,k),u,dt); %Notice that I am generating expected measurement for each sigma point of parameter distribution 
+        Yzp(:,k) = predict_state(xsbar_prev,Xp(:,k),u,dt); %Notice that I am generating expected measurement for each sigma point of parameter distribution 
         zphat=zphat+Wm_p(k)*Yzp(:,k);
     end
     Y1zp=Yzp-zphat(:,ones(1,size(Xp,2)));
+    Pzhat_2=Y1zp*diag(Wc_p)*Y1zp'+Q;
     Ppz = Y1p*diag(Wc_p)*Y1zp';  %critical point, generating cross covariance
     
-    Kp=Ppz*inv(Pzhat);
-    xpbar=xphat+Kp*(z-zhat);                              %state update
+    Kp=Ppz*inv(Pzhat_2);
+    xpbar=xphat+Kp*(z-zphat);                              %state update
     Pp=Pphat-Kp*Ppz';                                %covariance update
   
     %% Storing
@@ -128,3 +129,13 @@ figure,
 plot(Xpbar(1,:),'b')
 hold on;
 plot(X(5,:),'r')
+
+% figure, 
+% plot(Xsbar(2,:),'b')
+% hold on;
+% plot(X(2,:),'r')
+% 
+% figure,
+% plot(Xsbar(1,:),'b')
+% hold on;
+% plot(X(1,:),'r')
