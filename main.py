@@ -29,7 +29,7 @@ EKF.Q = Q_SIM
 
 
 W = World(100, 100)
-W.load('track2.pkl')
+# W.load('track2.pkl')
 
 N = 6000;
 control = np.random.rand(2, N) - 0.5;
@@ -52,8 +52,8 @@ cycle_model.observation_noise(Q_MODEL)
 W.add_agent(cycle_model)
 
 target = 1
-path = W.track["path"][0:, 0:]
-L = len(W.track["path"])
+# path = W.track["path"][0:, 0:]
+# L = len(W.track["path"])
 vmax = 0.5
 
 
