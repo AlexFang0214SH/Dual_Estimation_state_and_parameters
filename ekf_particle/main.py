@@ -10,16 +10,16 @@ from bicycle import Bicycle
 
 import EKF
 
-a = 0.01
-R_SIM = np.diag([0.01, 0.01, 0.1 * pi / 180, 0.01])*a;
+a = 0.1
+R_SIM = np.diag([0.001, 0.001, 0.01 * pi / 180, 0.01])*a;
 Q_SIM = np.diag([0.01, 0.01, 0.1 * pi / 180, 0.01])*a;
 
-R_MODEL = np.diag([0.01, 0.01, 0.1 * pi / 180, 0.01])*a;
-Q_MODEL = np.diag([0.01, 0.01, 0.1 * pi / 180, 0.015])*a
+R_MODEL = np.diag([0.001, 0.001, 0.01 * pi / 180, 0.01])*a;
+Q_MODEL = np.diag([0.02, 0.02, 0.2 * pi / 180, 0.015])*a
 # x,y,w,a
 
 EKF.R = R_MODEL
-EKF.Q = Q_SIM
+EKF.Q = Q_MODEL
 
 # state = [x, y, theta, v, 1/L, k/m].Transpose
 # u = [pwm, steer].Transpose
@@ -65,8 +65,8 @@ for i in range(N):
     # 	target = (target + 1)%L;
     # steer = min(pi/2, max(-pi/2, steer))
     # u = np.matrix([[vmax - cycle_sim.state[3,0]],[ steer]])
-    u = np.matrix([[(2. + 0.1 * np.random.randn() - cycle_sim.state[3, 0]) * 0.05],
-                   [0.1 * sin(0.004 * i) + 0. * np.random.randn()]])
+    u = np.matrix([[(4. + 0.1 * np.random.randn() - 1.0*cycle_sim.state[3, 0] + 2.0 * sin(0.01 * i) ) * 0.05],
+                   [0.0 * sin(0.004 * i) + 0.1 + 0.2 * np.random.randn()]])
 
     # Move actual system
     nX, nZ = cycle_sim.move(u)
@@ -77,7 +77,7 @@ for i in range(N):
     xEst, Qt, pEst = EKF.run(cycle_model, u, nZ);
 
     # xEst = nX
-
+    print(pEst)
     p = np.hstack((p, pEst))
 
     cycle_model.set(xEst)
@@ -111,8 +111,8 @@ def parameter(name, d):
 
 # summary("X", 0)
 # summary("Y", 1)
-# summary("V", 3)
-summary("theta", 2)
+summary("V", 3)
+# summary("theta", 2)
 p = p.A
 parameter("L_inv 1", p[0,:])
 parameter("k_by_m 50", p[1,:])
