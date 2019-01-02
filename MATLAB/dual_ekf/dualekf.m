@@ -3,7 +3,7 @@ clear all;
 close all;
 
 dt= 0.1;
-u = [0.5,0.01];
+u = [0.5,1];
 %state = [x, y, theta, v]
 %parameter = [1/L, k/m]
 %Simulation model 
@@ -14,7 +14,7 @@ xsbar = [0; 0; 0; 0]; % initial belief
 xpbar = [2.5; 40.5]; % initial belief
 
 Ps = diag([1, 1, 0.2, 5]); %initial belief uncertainity
-Pp = diag([20, 20]);
+Pp = 0.1*diag([20, 20]);
 Rs = diag([2^2 2^2 0.2^2 10^2]); %process noise
 Rp = diag([2^2 2^2]);
 Q = 10*diag([1^2 1^2 0.1^2 0.1^2]); %measurement noise
@@ -67,14 +67,14 @@ end
 % hold on;
 % plot(X(1,:),X(2,:),'r')
 figure, 
-plot(Xpbar(2,:),'b')
-hold on;
-plot(X(6,:),'r')
-
-figure,
 plot(Xpbar(1,:),'b')
 hold on;
 plot(X(5,:),'r')
+
+figure,
+plot(Xpbar(2,:),'b')
+hold on;
+plot(X(6,:),'r')
 
 % figure,plot(Xbar(5,:))
 % figure,plot(Xbar(6,:))
