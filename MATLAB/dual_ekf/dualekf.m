@@ -3,7 +3,7 @@ clear all;
 close all;
 
 dt= 0.1;
-u = [0.2,0.2];
+u = [0.5,1];
 %state = [x, y, theta, v]
 %parameter = [1/L, k/m]
 %Simulation model 
