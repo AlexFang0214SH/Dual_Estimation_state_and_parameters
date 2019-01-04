@@ -99,6 +99,8 @@ def resampling():
 	#
 	# 	PARAMETER_PARTICLES = PARAMETER_PARTICLES[:, inds]
 	# 	pw = np.zeros(NP) + 1.0 / NP  # init weight
+
+	
 cov_evolution = np.matrix(np.ones((2,1)))
 def run(cycle, u, z):
 	global Qt, PARAMETER_PARTICLES, pw, c, cov_evolution
