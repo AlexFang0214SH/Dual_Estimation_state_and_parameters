@@ -1,6 +1,6 @@
 classdef Tires
     properties
-        dt = 0.01;
+        dt = 0.1;
         nx = 3;
         ny = 3;
         R

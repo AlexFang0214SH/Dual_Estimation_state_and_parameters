@@ -1,6 +1,6 @@
 classdef Bicycle
     properties
-        dt = 0.01;
+        dt = 0.1;
         nx = 4;
         ny = 4;
         R

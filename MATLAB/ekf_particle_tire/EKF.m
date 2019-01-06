@@ -1,7 +1,7 @@
 
 classdef EKF
     properties
-        dt=0.01;
+        dt=0.1;
         R
         Q
         Qt
@@ -27,7 +27,7 @@ classdef EKF
             self.PARTICLES(1:2, :) = repmat([1700; 1.5], [1, self.N]);
             self.weight = zeros(1, self.N);
             
-            self.sigma = diag([1 1 1])*5;
+            self.sigma = diag([1 1 1])*300;
         end
     
         function [G, H] = compute_jacobian(self, dt, x, p, u)
@@ -85,7 +85,7 @@ classdef EKF
             % Preserve top 10
             top = self.PARTICLES(:, idx(1,1:10));
             self.PARTICLES = repmat(top, [1, self.N/10]);
-            
+
             diffusion = randn(4, self.N).*self.E*self.diffusion_mag;
             diffusion(:, 1:200) = zeros(4, 200);
             self.PARTICLES = self.PARTICLES + diffusion;

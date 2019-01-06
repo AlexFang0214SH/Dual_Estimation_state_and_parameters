@@ -1,7 +1,7 @@
 
 classdef EKF
     properties
-        dt=0.01;
+        dt=0.1;
         R
         Q
         Qt
@@ -22,7 +22,7 @@ classdef EKF
             self.PARTICLES = rand(2, self.N).*self.parameter_range;
             self.weight = zeros(1, self.N);
             
-            self.sigma = diag([1 1 100*self.dt*pi/180 10.0*self.dt]);
+            self.sigma = diag([1 1 100*self.dt*pi/180 10.0*self.dt])*200;
         end
     
         function [G, H] = compute_jacobian(self, dt, x, parameter, u)
