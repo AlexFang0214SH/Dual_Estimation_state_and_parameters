@@ -1,5 +1,5 @@
 
-classdef EKF_avg
+classdef EKF_delay
     properties
         dt=0.01;
         R
@@ -13,12 +13,16 @@ classdef EKF_avg
         E = [0.01; 0.2];
         evolution_cov = ones(2,1);
         
+        C = 30;
+        count = 0;
+        cov = zeros(2,1);
+        
         sigma
         
     end 
     
     methods
-        function self = EKF_avg(self)
+        function self = EKF_delay(self)
             self.PARTICLES = rand(2, self.N).*self.parameter_range;
             self.weight = zeros(1, self.N) + 1.0/self.N;
             
@@ -61,30 +65,33 @@ classdef EKF_avg
     
         function [xEst, pEst, self] = run(self, cycle, x, parameter, u, z)
 
-            evolution = randn(2, self.N).*self.E.*self.evolution_cov;
-            self.PARTICLES = self.PARTICLES + evolution;
+            self.count = self.count + 1;
             
             for i=1:self.N
-                cov = zeros(2,1);
-                self.weight(1,i) = 0;
-                c = 30;
-                for j=1:c
-                    [xp, zp] = cycle.step(x, self.PARTICLES(:,i), u);
-                    
-                    dz = zp - z;
-                    cov = cov + dz(3:4);
-                    
-                    self.weight(1,i) = self.weight(1,i) + self.gaussian(dz, self.sigma);
-                end
-                self.evolution_cov = abs(cov/c/self.dt);
+                [xp, zp] = cycle.step(x, self.PARTICLES(:,i), u);
+                
+                dz = zp - z;
+                self.cov = self.cov + dz(3:4);
+                
+                self.weight(1,i) = self.weight(1,i) + self.gaussian(dz, self.sigma);
             end
             
-            self.weight = self.weight/sum(self.weight);
+            w = self.weight/sum(self.weight);
             
-            pEst = self.PARTICLES*self.weight';
+            pEst = self.PARTICLES*w';
             
+            if mod(self.count, self.C) == 0
+                self = self.resampling();
+                self.weight(1,i) = 0;
+                self.count = 0;
+                self.evolution_cov = abs(self.cov/self.C/self.dt);
+                self.cov = zeros(2,1);
+                
+                evolution = randn(2, self.N).*self.E.*self.evolution_cov;
+                self.PARTICLES = self.PARTICLES + evolution;
+                
+            end
             
-            self = self.resampling();
             
             
             %   EKF with new parameter estimate

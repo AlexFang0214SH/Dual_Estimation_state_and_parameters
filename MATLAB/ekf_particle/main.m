@@ -1,16 +1,15 @@
 %   Noise configuration
 a = 0.1;
-R_SIM = diag([0.001, 0.001, 0.01 * pi / 180, 0.01])*a;
+R_SIM = diag([0.01, 0.01, 0.01 * pi / 180, 0.01])*a;
 Q_SIM = diag([0.01, 0.01, 0.1 * pi / 180, 0.01])*a;
 
-R_MODEL = diag([0.001, 0.001, 0.01 * pi / 180, 0.01])*a;
+R_MODEL = diag([0.01, 0.01, 0.01 * pi / 180, 0.01])*a;
 Q_MODEL = diag([0.02, 0.02, 0.2 * pi / 180, 0.015])*a;
 
 
 
-P = diag([1,1,0.02,0.01]);
+Qt = diag([1,1,0.02,0.01]);
 
-Qt = P;
 
 
 %   Define simulation model
@@ -25,12 +24,12 @@ cycle_model.R = R_MODEL;
 cycle_model.Q = Q_MODEL;
 
 
-N = 100000;
+N = 1000;
 X = zeros(4, N+1);
 X(:,1) = [0; 0; pi/6; 0];
 
 
-P = [1; 50];
+P = [3.0; 1700.0];
 
 Xhat = X;
 Phat = zeros(2, N+1);
@@ -46,7 +45,7 @@ ekf.Qt = Qt;
 for i=2:N+1
     x = X(:, i-1);
     
-    u = [(4. - x(4,1) + 2.0 * sin(0.01 * i) ) * 0.05; 0.1 + 0.2 * rand()];
+    u = [(4. - x(4,1) + 2.0 * sin(0.01 * i) ) * 0.05*1700; 0.1 + 0.2 * rand()];
     
     [nX, nY] = cycle_sim.step(x, P, u);
     X(:, i) = nX;

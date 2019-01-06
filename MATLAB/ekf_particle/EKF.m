@@ -6,16 +6,12 @@ classdef EKF
         Q
         Qt
         
-        N = 10;
+        N = 500;
         PARTICLES
         weight
-        parameter_range = [4; 100];
-        E = [0.01; 0.2];
+        parameter_range = [6; 3000];
+        E = [0.02*3; 0.01*1700];
         evolution_cov = ones(2,1);
-        
-        C = 30;
-        count = 0;
-        cov = zeros(2,1);
         
         sigma
         
@@ -24,7 +20,7 @@ classdef EKF
     methods
         function self = EKF(self)
             self.PARTICLES = rand(2, self.N).*self.parameter_range;
-            self.weight = zeros(1, self.N) + 1.0/self.N;
+            self.weight = zeros(1, self.N);
             
             self.sigma = diag([1 1 100*self.dt*pi/180 10.0*self.dt]);
         end
@@ -37,8 +33,8 @@ classdef EKF
             theta = x(3, 1);
             
             
-            L_inv = parameter(1,1);
-            K_m = parameter(2, 1);
+            L_inv = 1.0/parameter(1,1);
+            K_m = 1.0/parameter(2, 1);
             
             
             G = [   1, 0, -dt*v*sin(theta), dt*cos(theta);
@@ -58,40 +54,43 @@ classdef EKF
     
         function self= resampling(self)
             %   Best candidate resampling
-            [q, i] = max(self.weight);
-            winner = self.PARTICLES(:, i);
-            self.PARTICLES = repmat(winner, [1, self.N]);
+%             [q, i] = max(self.weight);
+%             winner = self.PARTICLES(:, i);
+%             self.PARTICLES = repmat(winner, [1, self.N]);
+
+            % Preserve top 10
+            [w, idx] = sort(self.weight, 'descend');
+            top = self.PARTICLES(:, idx(1,1:10));
+            self.PARTICLES = repmat(top, [1, self.N/10]);
+            
+%             diffusion = randn(4, self.N).*self.E*self.diffusion_mag;
+%             diffusion(:, 1:200) = zeros(4, 200);
+%             self.PARTICLES = self.PARTICLES + diffusion;
         end
     
         function [xEst, pEst, self] = run(self, cycle, x, parameter, u, z)
 
-            self.count = self.count + 1;
+            evolution = randn(2, self.N).*self.E.*self.evolution_cov;
+            self.PARTICLES = self.PARTICLES + evolution;
             
+            cov = zeros(2,1);
+            self.weight = zeros(1, self.N);
             for i=1:self.N
-                [xp, zp] = cycle.step(x, self.PARTICLES(:,i), u);
+                [xp, zp] = cycle.predict(x, self.PARTICLES(:,i), u);
                 
                 dz = zp - z;
-                self.cov = self.cov + dz(3:4);
+                cov = cov + dz(3:4);
                 
                 self.weight(1,i) = self.weight(1,i) + self.gaussian(dz, self.sigma);
             end
+
+            self.evolution_cov = self.evolution_cov*0.997 + 0.003*abs(cov/self.N/self.dt);
+            self.weight = self.weight/sum(self.weight);
             
-            w = self.weight/sum(self.weight);
             
-            pEst = self.PARTICLES*w';
+            self = self.resampling();
             
-            if mod(self.count, self.C) == 0
-                self = self.resampling();
-                self.weight(1,i) = 0;
-                self.count = 0;
-                self.evolution_cov = abs(self.cov/self.C/self.dt);
-                self.cov = zeros(2,1);
-                
-                evolution = randn(2, self.N).*self.E.*self.evolution_cov;
-                self.PARTICLES = self.PARTICLES + evolution;
-                
-            end
-            
+            pEst = mean(self.PARTICLES(:, 1:3), 2);
             
             
             %   EKF with new parameter estimate

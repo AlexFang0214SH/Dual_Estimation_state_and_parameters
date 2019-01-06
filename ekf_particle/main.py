@@ -11,10 +11,10 @@ from bicycle import Bicycle
 import EKF
 
 a = 0.1
-R_SIM = np.diag([0.001, 0.001, 0.01 * pi / 180, 0.01])*a;
+R_SIM = np.diag([0.01, 0.01, 0.01 * pi / 180, 0.01])*a;
 Q_SIM = np.diag([0.01, 0.01, 0.1 * pi / 180, 0.01])*a;
 
-R_MODEL = np.diag([0.001, 0.001, 0.01 * pi / 180, 0.01])*a;
+R_MODEL = np.diag([0.01, 0.001, 0.01 * pi / 180, 0.01])*a;
 Q_MODEL = np.diag([0.02, 0.02, 0.2 * pi / 180, 0.015])*a
 # x,y,w,a
 
@@ -23,7 +23,7 @@ EKF.Q = Q_MODEL
 
 # state = [x, y, theta, v, 1/L, k/m].Transpose
 # u = [pwm, steer].Transpose
-# [L_inv, K_by_M].Transpose
+# [L, M].Transpose
 
 
 W = World(100, 100)
@@ -33,7 +33,7 @@ N = 1000;
 control = np.random.rand(2, N) - 0.5;
 
 state = np.matrix([[10, 20, 0, 0]]).T
-parameter = np.matrix([[1, 50]]).T
+parameter = np.matrix([[3.0, 1700.0]]).T
 
 cycle_sim = Bicycle(state=state, parameter=parameter, color="green", name="Original");
 cycle_sim.process_noise(R_SIM)
@@ -65,8 +65,8 @@ for i in range(N):
     # 	target = (target + 1)%L;
     # steer = min(pi/2, max(-pi/2, steer))
     # u = np.matrix([[vmax - cycle_sim.state[3,0]],[ steer]])
-    u = np.matrix([[(4. + 0.1 * np.random.randn() - 1.0*cycle_sim.state[3, 0] + 2.0 * sin(0.01 * i) ) * 0.05],
-                   [0.0 * sin(0.004 * i) + 0.1 + 0.2 * np.random.randn()]])
+    u = np.matrix([[(4. + 0.1 * np.random.randn() - 1.0*cycle_sim.state[3, 0] + 2.0 * sin(0.01 * i) ) * 0.1*1700],
+                   [0.0 * sin(0.004 * i) + 0.1 + 0.25 * np.random.randn()]])
 
     # Move actual system
     nX, nZ = cycle_sim.move(u)

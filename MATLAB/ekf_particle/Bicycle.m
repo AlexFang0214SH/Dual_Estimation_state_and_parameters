@@ -18,10 +18,10 @@ classdef Bicycle
     end
     
     methods    
-        function [xNext, y] = step(self, x, parameter, u)
+        function [xNext, y] = predict(self, x, parameter, u)
             %   state = [x, y, theta, v].Transpose
             %   y = [x, y, theta, v].Transpose
-            %   parameter = [1/L, k/m].T
+            %   parameter = [L, m].T
             %   u = [pwm, steer].Transpose
             
             pwm = u(1,1);
@@ -29,17 +29,26 @@ classdef Bicycle
             
             theta = x(3,1);
             v = x(4,1);
-            L_inv = parameter(1,1);
-            k_by_m = parameter(2,1);
+            L_inv = 1.0/parameter(1,1);
+            k_by_m = 1.0/parameter(2,1);
             
             H = [v*cos(theta); v*sin(theta); v*L_inv*tan(steer); k_by_m*pwm];
+            
+            
+            xNext = x + H*self.dt ;
+            
+            y = self.C * xNext + self.D*H;
+        end
+    
+        function [xNext, y] = step(self, x, parameter, u)
+            [xNext, y] = self.predict(x, parameter, u);
             
             noise_process = self.R * randn(self.nx, 1);
             noise_measurement = self.Q * randn(self.ny, 1);
             
-            xNext = x + H*self.dt + noise_process ;
+            xNext = xNext + noise_process ;
             
-            y = self.C * xNext + self.D*H + noise_measurement;
+            y = y + noise_measurement;
         end
     
         

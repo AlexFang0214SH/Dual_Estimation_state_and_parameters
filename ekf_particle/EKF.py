@@ -24,8 +24,8 @@ def compute_jacobian(dt, state, parameter, u):
 	theta = state[2,0]
 
 
-	L_inv = parameter[0,0]
-	K_m = parameter[1,0]
+	L_inv = 1.0/parameter[0,0]
+	K_m = 1.0/parameter[1,0]
 
 
 	G = np.matrix([	[ 1, 0, -dt*v*sin(theta), dt*cos(theta)],
@@ -50,7 +50,7 @@ PARAMETER_PARTICLES = np.multiply(PARAMETER_PARTICLES, [[4], [100]])
 
 pw = np.zeros(N) + 1.0/N;
 
-E = [[0.01], [0.2]];
+E = [[0.1*3], [0.05*1700]];
 dt = 0.01
 sigma1 = 100.0*dt*np.pi/180
 sigma2 = 10.0*dt
@@ -125,7 +125,7 @@ def run(cycle, u, z):
 
 			pw[i] = pw[i] + gauss_likelihood(dz[0,0], sigma1) * gauss_likelihood(dz[1,0], sigma1) * gauss_likelihood(dz[2, 0], sigma1) * gauss_likelihood(dz[3, 0], sigma1)
 
-		cov_evolution = np.fabs(cov/c/dt);
+		# cov_evolution = np.fabs(cov/c/dt);
 		# print(cov_evolution)
 
 
@@ -135,7 +135,8 @@ def run(cycle, u, z):
 	# print(PARAMETER_PARTICLES)
 	# print(pw)
 
-	pEst = np.matmul(PARAMETER_PARTICLES, pw).T
+	# pEst = np.matmul(PARAMETER_PARTICLES, pw).T
+	pEst = PARAMETER_PARTICLES[:, 0]
 
 	resampling()
 

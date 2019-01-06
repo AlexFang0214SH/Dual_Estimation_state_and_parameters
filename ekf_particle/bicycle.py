@@ -42,15 +42,15 @@ class Bicycle():
 		self.parameter = parameter
 
 	def step(self, dt, state, parameter, u):
-		# state = [x, y, theta, v, 1/L, k/m].Transpose
+		# state = [x, y, theta, v].Transpose
 		# u = [pwm, steer].Transpose
 		pwm = u[0,0];
 		steer = u[1,0];
 
 		theta = state[2,0];
 		v = state[3,0];
-		L_inv = parameter[0,0];
-		k_by_m = parameter[1,0];
+		L_inv = 1.0/parameter[0,0];
+		k_by_m = 1.0/parameter[1,0];
 
 		h_T = np.matrix([[v*cos(theta), v*sin(theta), v*L_inv*tan(steer), k_by_m*pwm]]).T;
 
