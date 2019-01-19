@@ -6,18 +6,21 @@ classdef EKF
         Q
         Qt
         
+        count = 0;
+        
         N = 1000;
         PARTICLES
         weight
-        parameter_range = [1700.; 1.; 20e5; 8e5];
-        lower_range = [1000.0;1.0; 10e5; 2e5];
-        E = [0.; 0.0; 0.05e5; 0.02e5];
+        parameter_range = [1700.; 1.; 2e5; 8e4];
+        lower_range = [1000.0;1.0; 1e4; 1e4];
+        E = [0.; 0.0; 0.1e5; 0.01e5];
         diffusion_mag = 1;
         
         C = 1;
         gamma = 0.9;
         
         sigma
+        alpha = 0.998;
         
     end 
     
@@ -27,7 +30,7 @@ classdef EKF
             self.PARTICLES(1:2, :) = repmat([1700; 1.5], [1, self.N]);
             self.weight = zeros(1, self.N);
             
-            self.sigma = diag([1 1 1])*300;
+            self.sigma = diag([1 1 1])*500;
         end
     
         function [G, H] = compute_jacobian(self, dt, x, p, u)
@@ -65,6 +68,9 @@ classdef EKF
             
             [w, idx] = sort(self.weight, 'descend');
             
+            % Preserve top 10
+            top = self.PARTICLES(:, idx(1,1:10));
+            self.PARTICLES = repmat(top, [1, self.N/10]);
                
             
 %             [q, i] = max(self.weight(1, 1:self.N));
@@ -81,11 +87,6 @@ classdef EKF
 %             winner = self.PARTICLES(:, i);
 %             self.PARTICLES(:,  self.N/2+1: self.N) = repmat(winner, [1, self.N/2]);
 %        
-
-            % Preserve top 10
-            top = self.PARTICLES(:, idx(1,1:10));
-            self.PARTICLES = repmat(top, [1, self.N/10]);
-
             diffusion = randn(4, self.N).*self.E*self.diffusion_mag;
             diffusion(:, 1:200) = zeros(4, 200);
             self.PARTICLES = self.PARTICLES + diffusion;
@@ -94,19 +95,40 @@ classdef EKF
         end
     
         function [xEst, pEst, self] = run(self, cycle, x, parameter, u, z)
+            self.count = self.count + 1;
 
-
+            Z = zeros(3, self.N);
+            
             diffusion = 0;
             for i=1:self.N
-                [xp, zp] = cycle.predict(x, self.PARTICLES(:,i), u);
+                [xp, zp] = cycle.step(x, self.PARTICLES(:,i), u);
                 
                 dz = zp - z;
+                Z(:, i) = dz;
                 diffusion = diffusion + norm(dz);
                 
                 self.weight(1,i) = self.weight(1,i) + self.gaussian(dz, self.sigma);
             end
-            self.diffusion_mag = self.diffusion_mag*0.998 + 0.002*1*diffusion/self.C/self.N;
+            self.diffusion_mag = self.diffusion_mag*self.alpha + (1 - self.alpha)*1*diffusion/self.C/self.N;
             self.diffusion_mag
+            
+            if self.count == 1
+                scatter(Z(1, :), Z(2,:));
+                hold on
+            end
+            if self.count == 50
+                scatter(Z(1, :), Z(2,:), [], 'd');
+                hold on
+            end
+            if self.count == 150
+                scatter(Z(1, :), Z(2,:), [], 'x');
+                hold on
+            end
+            if self.count == 250
+                scatter(Z(1, :), Z(2,:), [], 's');
+                hold on
+                scatter(0,0, [], 'r', "filled")
+            end
             
             
             self.weight = self.weight/sum(self.weight);

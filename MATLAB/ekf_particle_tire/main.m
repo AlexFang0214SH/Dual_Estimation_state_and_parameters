@@ -3,7 +3,7 @@
 load(fullfile(matlabroot, 'toolbox', 'ident', 'iddemos', 'data', 'vehicledata'));
 
 %   Noise configuration
-a = 0.5;
+a = 0.1;
 R_SIM = diag([0.01, 0.01, 0.01])*a*4;
 Q_SIM = diag([0.01, 0.01, 0.01])*a*10;
 
@@ -13,7 +13,7 @@ Q_MODEL = diag([0.02, 0.02, 0.015])*a*10;
 
 
 
-Qt = diag([0.01, 0.01, 0.01]);
+Qt = diag([0.01, 0.01, 0.01])*10;
 
 
 
@@ -29,7 +29,7 @@ cycle_model.R = R_MODEL;
 cycle_model.Q = Q_MODEL;
 
 
-N = 1000;
+N = 600;
 X = zeros(3, N+1);
 X(:,1) = [0.01; 0; 0];
 
@@ -82,8 +82,8 @@ end
 % plot(X(3,:), 'b');
 % hold on
 % plot(Xhat(3,:), 'r');
-
-
+% 
+% 
 figure,
 plot(Phat(3,:), 'r');
 
