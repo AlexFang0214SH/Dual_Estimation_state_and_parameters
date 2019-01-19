@@ -11,7 +11,7 @@ classdef EKF
         N = 1000;
         PARTICLES
         weight
-        parameter_range = [1700.; 1.; 2e5; 8e4];
+        parameter_range = [1100.; 0.5; 2e5; 8e4];
         lower_range = [1000.0;1.0; 1e4; 1e4];
         E = [0.; 0.0; 0.1e5; 0.01e5];
         diffusion_mag = 1;
@@ -20,14 +20,14 @@ classdef EKF
         gamma = 0.9;
         
         sigma
-        alpha = 0.998;
+        alpha = 0.99;
         
     end 
     
     methods
         function self = EKF(self)
             self.PARTICLES = rand(4, self.N).*self.parameter_range + repmat(self.lower_range, [1, self.N]);
-            self.PARTICLES(1:2, :) = repmat([1700; 1.5], [1, self.N]);
+            self.PARTICLES(1:2, :) = repmat([1700;1.5], [1, self.N]);
             self.weight = zeros(1, self.N);
             
             self.sigma = diag([1 1 1])*500;
@@ -135,8 +135,10 @@ classdef EKF
             
             
             
+            
+            pEst = self.PARTICLES*self.weight';
             self = self.resampling();
-            pEst = mean(self.PARTICLES(:, 1:3), 2);
+            %pEst = mean(self.PARTICLES(:, 1:3), 2);
             
             %pEst = self.PARTICLES(:, 1);
             
